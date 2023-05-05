@@ -2,7 +2,6 @@ import random
 import re
 
 import folium
-import pandas as pd
 import creds
 from helpers import get_connection
 
@@ -13,11 +12,10 @@ NASHVILLE_LATITUDE = 36.164577
 NASHVILLE_LONGITUDE = -86.776949
 
 color_list_glob = ['r', 'g', 'b', 'y', 'c', 'm', 'k']
-df = pd.main()
-
 
 def get_coord_set(connection):
-    sql = """select tda.longitude, tda.latitude, reis.neighborhood
+    sql = """
+select reis.neighborhood, avg(tda.latitude), avg(tda.longitude)
           from tn_davidson_addresses tda  
           join (  
           select padctn_id, neighborhood,  
@@ -28,7 +26,8 @@ def get_coord_set(connection):
           coalesce(trim(neighborhood),'') <> ''  
           and property_use in ('Single Family')
           ) reis on tda.padctn_id = reis.padctn_id 
-          where reis.rn = 1 
+          where reis.rn = 1
+group by reis.neighborhood;
           ;"""
     cursor = connection.cursor()
     cursor.execute(sql)
@@ -126,25 +125,15 @@ def main():
         folium.TileLayer('cartodbdark_matter').add_to(interactive_map)
         folium.LayerControl().add_to(interactive_map)
 
-        coord_dict = {}
-        for coord in coord_list:
-            # var_longitude.append(coord[0])
-            # var_latitude.append(coord[1])
-            xy_list = [coord[1], coord[0]]
-            if coord[2] in coord_dict:
-                coord_dict[coord[2]].append(xy_list)
-            else:
-                coord_dict[coord[2]] = [xy_list]
-            # plt.scatter(coord[0],coord[1],s=1)
-        # plt.scatter(var_longitude, var_latitude, s=0.05)
-        for neighborhood, xy_coord in coord_dict.items():
+        for row in coord_list:
             # x, y = zip(*xy_coord)
             # print(neighborhood)
             # print(color_list_glob[int(neighborhood) % len(color_list_glob)])
             # plt.scatter(x, y, s=.01, c=color_list_glob[int(neighborhood) % len(color_list_glob)])
 
-
-            avg_latitude, avg_longitude = get_avg_lat_long(xy_coord)
+            neighborhood = row[0]
+            avg_latitude = row[1]
+            avg_longitude = row[2]
 
             popup_html = get_popup_html(cnx, neighborhood)
             popup_folium = folium.Popup(html=popup_html, min_width=300, max_width=300)
