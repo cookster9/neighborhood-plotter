@@ -4,14 +4,14 @@ import re
 import folium
 import creds
 from helpers import get_connection
+import json
 
-TEMPLATE_DIRECTORY = '../analytics_project/dashboard/templates/dashboard'
-STATIC_DIRECTORY = '../analytics_project/dashboard/static/dashboard/html'
+TEMPLATE_DIRECTORY = '../analytics_project/dashboard/templates/dashboard/'
+STATIC_DIRECTORY = '../analytics_project/dashboard/static/dashboard/html/'
+JSON_DIRECTORY = '../analytics_project/dashboard/static/dashboard/json/'
 
 NASHVILLE_LATITUDE = 36.164577
 NASHVILLE_LONGITUDE = -86.776949
-
-color_list_glob = ['r', 'g', 'b', 'y', 'c', 'm', 'k']
 
 def get_coord_set(connection):
     sql = """
@@ -65,6 +65,30 @@ def get_sale_rows(connection, neighborhood):
     return rows
 
 
+def get_total_sales(connection):
+    sql = """select STR_TO_DATE(CONCAT(yearweek(now()),' Sunday'), '%X%V %W') as 'Week_of', count(*)
+    from real_estate_info_scrape where year_week = yearweek(now()) and property_use = 'SINGLE FAMILY'
+    union
+    select STR_TO_DATE(CONCAT(yearweek(now())-1,' Sunday'), '%X%V %W') as 'Week_of', count(*)
+    from real_estate_info_scrape where year_week = (yearweek(now()))-1 and property_use = 'SINGLE FAMILY'
+    union
+    select STR_TO_DATE(CONCAT(yearweek(now())-2,' Sunday'), '%X%V %W') as 'Week_of', count(*)
+    from real_estate_info_scrape where year_week = (yearweek(now()))-2 and property_use = 'SINGLE FAMILY'
+    union
+    select STR_TO_DATE(CONCAT(yearweek(now())-3,' Sunday'), '%X%V %W') as 'Week_of', count(*)
+    from real_estate_info_scrape where year_week = (yearweek(now()))-3 and property_use = 'SINGLE FAMILY'
+    union
+    select STR_TO_DATE(CONCAT(yearweek(now())-4,' Sunday'), '%X%V %W') as 'Week_of', count(*)
+    from real_estate_info_scrape where year_week = (yearweek(now()))-4 and property_use = 'SINGLE FAMILY'
+    order by 1 asc"""
+    cursor = connection.cursor()
+    cursor.execute(sql)
+    rows = cursor.fetchall()
+    # print(cursor.rowcount)
+    cursor.close()
+    return rows
+
+
 def get_popup_html(connection, neighborhood):
     rows = get_sale_rows(connection, neighborhood)
     html_out = """<table style="width:100%">
@@ -93,23 +117,21 @@ def get_neighborhood_description(connection, neighborhood):
     return neighborhood_clean
 
 
-def get_avg_lat_long(xy_coord):
-    sum_x = 0.0
-    sum_y = 0.0
-    for y, x in xy_coord:
-        sum_x = sum_x + float(x)
-        sum_y = sum_y + float(y)
-    avg_x = sum_x / len(xy_coord)
-    avg_y = sum_y / len(xy_coord)
-    return avg_y, avg_x
-
-
 def main():
     cnx = get_connection(creds.aws_user, creds.aws_pass,
                          creds.aws_host,
                          creds.aws_database)
     if cnx:
         print("got connection")
+        total_rows = get_total_sales(cnx)
+        context = {}
+        for row in total_rows:
+            context[str(row[0])] = row[1]
+
+        f = open(JSON_DIRECTORY + "total_sales.json", "w")
+        f.write(json.dumps(context))
+        f.close()
+
         coord_list = get_coord_set(cnx)
         # subplot = plt.subplot()
 
@@ -162,8 +184,8 @@ def main():
         #     name="Public transport stops"
         # )
 
-        interactive_map.save(TEMPLATE_DIRECTORY + '/' + "base-map.html")
-        interactive_map.save(STATIC_DIRECTORY + '/' + "base-map.html")
+        interactive_map.save(TEMPLATE_DIRECTORY + "base-map.html")
+        interactive_map.save(STATIC_DIRECTORY + "base-map.html")
 
         # plt.savefig('../pythonProject/analytics_project/dashboard/static/dashboard/images/foo.png')
     else:
