@@ -5,6 +5,7 @@ import folium
 import creds
 from helpers import get_connection
 import json
+import queries
 
 TEMPLATE_DIRECTORY = '../analytics_project/dashboard/templates/dashboard/'
 STATIC_DIRECTORY = '../analytics_project/dashboard/static/dashboard/html/'
@@ -14,21 +15,7 @@ NASHVILLE_LATITUDE = 36.164577
 NASHVILLE_LONGITUDE = -86.776949
 
 def get_coord_set(connection):
-    sql = """
-select reis.neighborhood, avg(tda.latitude), avg(tda.longitude)
-          from tn_davidson_addresses tda  
-          join (  
-          select padctn_id, neighborhood,  
-          ROW_NUMBER() OVER (partition by padctn_id order by sale_date desc)  
-          rn from real_estate_info_scrape reis_in
-          join neighborhoods n on reis_in.neighborhood = n.id
-          where
-          coalesce(trim(neighborhood),'') <> ''  
-          and property_use in ('Single Family')
-          ) reis on tda.padctn_id = reis.padctn_id 
-          where reis.rn = 1
-group by reis.neighborhood;
-          ;"""
+    sql = queries.get_coord_set
     cursor = connection.cursor()
     cursor.execute(sql)
     rows = cursor.fetchall()
@@ -38,25 +25,7 @@ group by reis.neighborhood;
 
 
 def get_sale_rows(connection, neighborhood):
-    sql = """select STR_TO_DATE(CONCAT(yearweek(now()),' Sunday'), '%X%V %W') as 'Week of', (select count(*)
-    from real_estate_info_scrape where neighborhood = {0}
-    and year_week = yearweek(now())) sale_count
-    union
-    select STR_TO_DATE(CONCAT(yearweek(now())-1,' Sunday'), '%X%V %W') as 'Week of', (select count(*)
-    from real_estate_info_scrape where neighborhood = {0}
-    and year_week = (yearweek(now()))-1) sale_count
-    union
-    select STR_TO_DATE(CONCAT(yearweek(now())-2,' Sunday'), '%X%V %W') as 'Week of', (select count(*)
-    from real_estate_info_scrape where neighborhood = {0}
-    and year_week = (yearweek(now()))-2) sale_count
-    union
-    select STR_TO_DATE(CONCAT(yearweek(now())-3,' Sunday'), '%X%V %W') as 'Week of', (select count(*)
-    from real_estate_info_scrape where neighborhood = {0}
-    and year_week = (yearweek(now()))-3) sale_count
-    union
-    select STR_TO_DATE(CONCAT(yearweek(now())-4,' Sunday'), '%X%V %W') as 'Week of', (select count(*)
-    from real_estate_info_scrape where neighborhood = {0}
-    and year_week = (yearweek(now()))-4) sale_count """.format(neighborhood)
+    sql = queries.get_sales_rows.format(neighborhood)
     cursor = connection.cursor()
     cursor.execute(sql)
     rows = cursor.fetchall()
@@ -66,21 +35,7 @@ def get_sale_rows(connection, neighborhood):
 
 
 def get_total_sales(connection):
-    sql = """select STR_TO_DATE(CONCAT(yearweek(now()),' Sunday'), '%X%V %W') as 'Week_of', count(*)
-    from real_estate_info_scrape where year_week = yearweek(now()) and property_use = 'SINGLE FAMILY'
-    union
-    select STR_TO_DATE(CONCAT(yearweek(now())-1,' Sunday'), '%X%V %W') as 'Week_of', count(*)
-    from real_estate_info_scrape where year_week = (yearweek(now()))-1 and property_use = 'SINGLE FAMILY'
-    union
-    select STR_TO_DATE(CONCAT(yearweek(now())-2,' Sunday'), '%X%V %W') as 'Week_of', count(*)
-    from real_estate_info_scrape where year_week = (yearweek(now()))-2 and property_use = 'SINGLE FAMILY'
-    union
-    select STR_TO_DATE(CONCAT(yearweek(now())-3,' Sunday'), '%X%V %W') as 'Week_of', count(*)
-    from real_estate_info_scrape where year_week = (yearweek(now()))-3 and property_use = 'SINGLE FAMILY'
-    union
-    select STR_TO_DATE(CONCAT(yearweek(now())-4,' Sunday'), '%X%V %W') as 'Week_of', count(*)
-    from real_estate_info_scrape where year_week = (yearweek(now()))-4 and property_use = 'SINGLE FAMILY'
-    order by 1 asc"""
+    sql = queries.get_total_sales
     cursor = connection.cursor()
     cursor.execute(sql)
     rows = cursor.fetchall()
