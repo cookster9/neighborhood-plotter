@@ -8,5 +8,6 @@ setup(
     license='MIT',
     author='andrewcook',
     author_email='acook999@gmail.com',
-    description='Create a folium map of nashville home sales (data not included)'
+    description='Create a folium map of nashville home sales (data not included)',
+    install_requires=['folium']
 )

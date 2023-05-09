@@ -3,9 +3,15 @@ import re
 
 import folium
 import creds
-from helpers import get_connection
+try:
+    from .helpers import get_connection
+except:
+    from helpers import get_connection
 import json
-import queries
+try:
+    from . import queries
+except:
+    import queries
 
 TEMPLATE_DIRECTORY = '../analytics_project/dashboard/templates/dashboard/'
 STATIC_DIRECTORY = '../analytics_project/dashboard/static/dashboard/html/'
