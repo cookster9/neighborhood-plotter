@@ -47,8 +47,13 @@ def get_result_set(connection, sql):
 
 def main():
     cnx = get_connection(creds.aws_user, creds.aws_pass,
-                         creds.aws_host,
-                         creds.aws_database)
+                          creds.aws_host,
+                          creds.aws_database)
+
+    # cnx = get_connection(creds.mac_user, creds.mac_password,
+    #                       creds.mac_host,
+    #                       creds.mac_database)
+
     if cnx:
         print("got connection")
         total_rows = get_result_set(cnx, queries.get_total_sales)
@@ -60,34 +65,54 @@ def main():
         f.write(json.dumps(context))
         f.close()
 
-        coord_list = get_result_set(cnx, queries.get_coord_set)
+        neighborhood_list = get_result_set(cnx, queries.get_coord_set)
 
         interactive_map = folium.Map(
             location=(NASHVILLE_LATITUDE, NASHVILLE_LONGITUDE),
             zoom_start=12,
             control_scale=True
         )
-        folium.TileLayer('Stamen Terrain').add_to(interactive_map)
-        folium.TileLayer('Stamen Toner').add_to(interactive_map)
-        folium.TileLayer('Stamen Water Color').add_to(interactive_map)
-        folium.TileLayer('cartodbpositron').add_to(interactive_map)
-        folium.TileLayer('cartodbdark_matter').add_to(interactive_map)
-        folium.LayerControl().add_to(interactive_map)
+        # folium.TileLayer('Stamen Terrain').add_to(interactive_map)
+        # folium.TileLayer('Stamen Toner').add_to(interactive_map)
+        # folium.TileLayer('Stamen Water Color').add_to(interactive_map)
+        # folium.TileLayer('cartodbpositron').add_to(interactive_map)
+        # folium.TileLayer('cartodbdark_matter').add_to(interactive_map)
 
-        for row in coord_list:
-            neighborhood = row[0]
-            avg_latitude = row[1]
-            avg_longitude = row[2]
-            neighborhood_name = row[3].replace('_', ' ')
+
+        for neighborhood_row in neighborhood_list:
+            neighborhood = neighborhood_row[0]
+            neighborhood_name = neighborhood_row[3].replace('_', ' ')
             neighborhood_clean = re.sub('[^A-Za-z0-9 /]+', '', neighborhood_name)
 
             popup_html = get_popup_html(cnx, neighborhood)
             popup_folium = folium.Popup(html=popup_html, min_width=300, max_width=300)
 
+            neighborhood_group = folium.FeatureGroup(name=neighborhood_clean).add_to(interactive_map)
+
+            lat_long_sql = queries.get_lat_long.format(neighborhood)
+            house_list = get_result_set(cnx, lat_long_sql)
+
+            for house_row in house_list:
+                latitude = house_row[0]
+                longitude = house_row[1]
+                circle = folium.CircleMarker(
+                    [latitude, longitude],
+                    radius=5,
+                    popup='Un cercle',
+                    color="#e74c3c",  # rouge
+
+                )
+                print([latitude, longitude])
+                neighborhood_group.add_child(circle)
+
+            avg_latitude = neighborhood_row[1]
+            avg_longitude = neighborhood_row[2]
+
             print(neighborhood, [avg_latitude, avg_longitude])
 
             tooltip_color, icon_color = get_colors_from_set(folium.map.Icon.color_options)
-            address_point = folium.Marker(
+
+            neighborhood_point = folium.Marker(
                 location=[avg_latitude, avg_longitude],
                 tooltip=folium.map.Tooltip(text=neighborhood_clean),
                 popup=popup_folium,
@@ -97,7 +122,9 @@ def main():
                                  ),
 
             )
-            address_point.add_to(interactive_map)
+            neighborhood_group.add_child(neighborhood_point)
+
+        folium.LayerControl().add_to(interactive_map)
 
         interactive_map.save(TEMPLATE_DIRECTORY + "base-map.html")
         interactive_map.save(STATIC_DIRECTORY + "base-map.html")
