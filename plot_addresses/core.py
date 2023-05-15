@@ -3,11 +3,13 @@ import re
 
 import folium
 import creds
+import json
+
+# from current project
 try:
     from .helpers import get_connection
 except:
     from helpers import get_connection
-import json
 try:
     from . import queries
 except:
@@ -84,26 +86,10 @@ def main():
             neighborhood_name = neighborhood_row[3].replace('_', ' ')
             neighborhood_clean = re.sub('[^A-Za-z0-9 /]+', '', neighborhood_name)
 
-            popup_html = get_popup_html(cnx, neighborhood)
-            popup_folium = folium.Popup(html=popup_html, min_width=300, max_width=300)
-
             neighborhood_group = folium.FeatureGroup(name=neighborhood_clean).add_to(interactive_map)
 
-            lat_long_sql = queries.get_lat_long.format(neighborhood)
-            house_list = get_result_set(cnx, lat_long_sql)
-
-            for house_row in house_list:
-                latitude = house_row[0]
-                longitude = house_row[1]
-                circle = folium.CircleMarker(
-                    [latitude, longitude],
-                    radius=5,
-                    popup='Un cercle',
-                    color="#e74c3c",  # rouge
-
-                )
-                print([latitude, longitude])
-                neighborhood_group.add_child(circle)
+            popup_html = get_popup_html(cnx, neighborhood)
+            popup_folium = folium.Popup(html=popup_html, min_width=300, max_width=300)
 
             avg_latitude = neighborhood_row[1]
             avg_longitude = neighborhood_row[2]
@@ -124,6 +110,23 @@ def main():
             )
             neighborhood_group.add_child(neighborhood_point)
 
+            lat_long_sql = queries.get_lat_long.format(neighborhood)
+            house_list = get_result_set(cnx, lat_long_sql)
+
+            for house_row in house_list:
+                latitude = house_row[0]
+                longitude = house_row[1]
+                location = house_row[2]
+                circle = folium.CircleMarker(
+                    [latitude, longitude],
+                    radius=2,
+                    fill=True,
+                    popup=location,
+                    color=tooltip_color,
+
+                )
+                neighborhood_group.add_child(circle)
+
         folium.LayerControl().add_to(interactive_map)
 
         interactive_map.save(TEMPLATE_DIRECTORY + "base-map.html")
@@ -143,7 +146,7 @@ def get_colors_from_set(in_set):
         if idx == stop_at:
             tooltip_color = x
     if tooltip_color == "white":
-        icon_color = "black"
+        tooltip_color = "black"
     return tooltip_color, icon_color
 
 

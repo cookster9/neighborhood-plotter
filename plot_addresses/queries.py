@@ -48,10 +48,10 @@ select reis.neighborhood, avg(tda.latitude), avg(tda.longitude), reis.descriptio
           and year_week > (yearweek(now()))-5
           ) reis on tda.padctn_id = reis.padctn_id 
           where reis.rn = 1
-group by reis.neighborhood, reis.description limit 1;
+group by reis.neighborhood, reis.description;
           """
 
-get_lat_long = """select latitude, longitude
+get_lat_long = """select latitude, longitude, location
 from real_estate_info_scrape reis
 inner join tn_davidson_addresses tda on reis.padctn_id = tda.padctn_id
 where reis.neighborhood = {0} and year_week > (yearweek(now()))-5;
