@@ -149,5 +149,5 @@ def get_colors_from_set(in_set):
         tooltip_color = "black"
     return tooltip_color, icon_color
 
-
-main()
+if __name__ == "__main__":
+    main()
