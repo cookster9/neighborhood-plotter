@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='plot_addresses',
-    version='0.6',
+    version='0.6.1',
     packages=['plot_addresses'],
     url='https://github.com/cookster9/neighborhood-plotter',
     license='MIT',
