@@ -2,8 +2,8 @@ import random
 import re
 
 import folium
-# import creds
-import local_creds as creds
+import creds
+# import local_creds as creds
 import json
 
 # from current project in case I make this a package
