@@ -48,7 +48,8 @@ select reis.neighborhood, avg(tda.latitude), avg(tda.longitude), reis.descriptio
           and year_week > (yearweek(now()))-5
           ) reis on tda.padctn_id = reis.padctn_id 
           where reis.rn = 1
-group by reis.neighborhood, reis.description;
+group by reis.neighborhood, reis.description
+order by reis.description asc;
           """
 
 get_lat_long = """select latitude, longitude, location

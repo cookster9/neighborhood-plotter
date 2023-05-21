@@ -2,10 +2,11 @@ import random
 import re
 
 import folium
-import creds
+# import creds
+import local_creds as creds
 import json
 
-# from current project
+# from current project in case I make this a package
 try:
     from .helpers import get_connection
 except:
@@ -17,6 +18,7 @@ except:
 
 TEMPLATE_DIRECTORY = '../analytics_project/dashboard/templates/dashboard/'
 STATIC_DIRECTORY = '../analytics_project/dashboard/static/dashboard/html/'
+STATIC_DIRECTORY_2 = '../analytics_project/static/dashboard/html/'
 JSON_DIRECTORY = '../analytics_project/dashboard/static/dashboard/json/'
 
 NASHVILLE_LATITUDE = 36.164577
@@ -51,10 +53,6 @@ def main():
     cnx = get_connection(creds.aws_user, creds.aws_pass,
                           creds.aws_host,
                           creds.aws_database)
-
-    # cnx = get_connection(creds.mac_user, creds.mac_password,
-    #                       creds.mac_host,
-    #                       creds.mac_database)
 
     if cnx:
         print("got connection")
@@ -119,7 +117,7 @@ def main():
                 location = house_row[2]
                 circle = folium.CircleMarker(
                     [latitude, longitude],
-                    radius=2,
+                    radius=4,
                     fill=True,
                     popup=location,
                     color=tooltip_color,
@@ -131,6 +129,7 @@ def main():
 
         interactive_map.save(TEMPLATE_DIRECTORY + "base-map.html")
         interactive_map.save(STATIC_DIRECTORY + "base-map.html")
+        interactive_map.save(STATIC_DIRECTORY_2 + "base-map.html")
 
         # plt.savefig('../pythonProject/analytics_project/dashboard/static/dashboard/images/foo.png')
     else:
