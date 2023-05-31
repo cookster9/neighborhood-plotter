@@ -1,9 +1,21 @@
 import random
 import re
+import sys
 
 import folium
-import creds
-# import local_creds as creds
+from sys import platform
+# import creds
+# not really platform specific, but i have a local version on mac and prod in linux so this is an easy way to
+# change credentials for a local dev environment
+if platform == "linux" or platform == "linux2":
+    import creds.py
+    LIMIT = sys.maxsize
+elif platform == "darwin":
+    import local_creds as creds
+    LIMIT = 1
+elif platform == "win32":
+    import local_creds as creds
+
 import json
 
 # from current project in case I make this a package
@@ -65,7 +77,7 @@ def main():
         f.write(json.dumps(context))
         f.close()
 
-        neighborhood_list = get_result_set(cnx, queries.get_coord_set)
+        neighborhood_list = get_result_set(cnx, queries.get_coord_set.format(LIMIT))
 
         interactive_map = folium.Map(
             location=(NASHVILLE_LATITUDE, NASHVILLE_LONGITUDE),

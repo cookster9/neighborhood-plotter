@@ -12,7 +12,8 @@ get_total_sales = """select DATE_FORMAT(STR_TO_DATE(CONCAT(yearweek(now()),' Sun
     union
     select DATE_FORMAT(STR_TO_DATE(CONCAT(yearweek(now())-4,' Sunday'), '%X%V %W'),'%m/%d') as 'Week_of', count(*)
     from real_estate_info_scrape where year_week = (yearweek(now()))-4 and property_use = 'SINGLE FAMILY'
-    order by 1 asc;"""
+    order by 1 asc
+    ;"""
 
 get_sales_rows = """select STR_TO_DATE(CONCAT(yearweek(now()),' Sunday'), '%X%V %W') as 'Week of', (select count(*)
     from real_estate_info_scrape where neighborhood = {0}
@@ -49,7 +50,8 @@ select reis.neighborhood, avg(tda.latitude), avg(tda.longitude), reis.descriptio
           ) reis on tda.padctn_id = reis.padctn_id 
           where reis.rn = 1
 group by reis.neighborhood, reis.description
-order by reis.description asc;
+order by reis.description asc
+limit {0};
           """
 
 get_lat_long = """select latitude, longitude, location
@@ -63,5 +65,5 @@ from neighborhoods n
 inner join real_estate_info_scrape reis on n.id = reis.neighborhood
 where property_use in ('Single Family')
           and year_week > (yearweek(now()))-5
-          limit 1;
+          limit {0};
           """
