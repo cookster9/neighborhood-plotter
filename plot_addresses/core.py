@@ -3,6 +3,7 @@ import re
 import sys
 
 import folium
+from folium.elements import *
 from sys import platform
 # import creds
 # not really platform specific, but i have a local version on mac and prod in linux so this is an easy way to
@@ -82,15 +83,9 @@ def main():
         interactive_map = folium.Map(
             location=(NASHVILLE_LATITUDE, NASHVILLE_LONGITUDE),
             zoom_start=12,
-            control_scale=True
+            control_scale=True,
+            scroll_wheel_zoom=False
         )
-        # folium.TileLayer('Stamen Terrain').add_to(interactive_map)
-        # folium.TileLayer('Stamen Toner').add_to(interactive_map)
-        # folium.TileLayer('Stamen Water Color').add_to(interactive_map)
-        # folium.TileLayer('cartodbpositron').add_to(interactive_map)
-        # folium.TileLayer('cartodbdark_matter').add_to(interactive_map)
-
-
         for neighborhood_row in neighborhood_list:
             neighborhood = neighborhood_row[0]
             neighborhood_name = neighborhood_row[3].replace('_', ' ')
@@ -142,8 +137,6 @@ def main():
         interactive_map.save(TEMPLATE_DIRECTORY + "base-map.html")
         interactive_map.save(STATIC_DIRECTORY + "base-map.html")
         interactive_map.save(STATIC_DIRECTORY_2 + "base-map.html")
-
-        # plt.savefig('../pythonProject/analytics_project/dashboard/static/dashboard/images/foo.png')
     else:
         print("could not connect to mysql")
 
