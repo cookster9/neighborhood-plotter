@@ -84,7 +84,7 @@ def main():
             location=(NASHVILLE_LATITUDE, NASHVILLE_LONGITUDE),
             zoom_start=12,
             control_scale=True,
-            scroll_wheel_zoom=False
+            scroll_wheel_zoom=True
         )
         for neighborhood_row in neighborhood_list:
             neighborhood = neighborhood_row[0]
