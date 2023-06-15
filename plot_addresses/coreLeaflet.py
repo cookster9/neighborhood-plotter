@@ -9,11 +9,11 @@ from sys import platform
 # not really platform specific, but i have a local version on mac and prod in linux so this is an easy way to
 # change credentials for a local dev environment
 if platform == "linux" or platform == "linux2":
-    import creds.py
+    import creds
     LIMIT = sys.maxsize
 elif platform == "darwin":
     import local_creds as creds
-    LIMIT = 1
+    LIMIT = 1000
 elif platform == "win32":
     import local_creds as creds
 
@@ -28,6 +28,8 @@ try:
     from . import queries
 except:
     import queries
+
+import js
 
 TEMPLATE_DIRECTORY = '../analytics_project/dashboard/templates/dashboard/'
 STATIC_DIRECTORY = '../analytics_project/dashboard/static/dashboard/html/'
@@ -84,7 +86,7 @@ def main():
      """
         html = html + leaflet_css + leaflet_js
         css = """
-        <style>#map { height: 180px; }</style>
+        <style>#map { height: 500px; }</style>
         """
         html = html + css
 
@@ -95,22 +97,18 @@ def main():
 
         html = html + """<div id="map"></div>
         """
-        html = html + """
-        <script>
-        """
         script_html = """
-            var map = L.map('map').setView([{0}, {1}], 13);
+        <script>
+            var map = L.map('map').setView([{0}, {1}], 10);
         """.format(NASHVILLE_LATITUDE, NASHVILLE_LONGITUDE)
         script_html = script_html + """L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 }).addTo(map);
 """
+        script_html = script_html + js.all_icons
 
 
-        script_html = script_html + """</script>"""
-        html = html + script_html
-        html = html + """</html>"""
         print("got connection")
         total_rows = get_result_set(cnx, queries.get_total_sales)
         context = {}
@@ -121,61 +119,48 @@ def main():
         f.write(json.dumps(context))
         f.close()
 
-        neighborhood_list = get_result_set(cnx, queries.get_coord_set.format(LIMIT))
+        neighborhood_list = get_result_set(cnx, queries.get_coord_set)
 
-        interactive_map = folium.Map(
-            location=(NASHVILLE_LATITUDE, NASHVILLE_LONGITUDE),
-            zoom_start=12,
-            control_scale=True,
-            scroll_wheel_zoom=True
-        )
+        group_dict = {}
         for neighborhood_row in neighborhood_list:
             neighborhood = neighborhood_row[0]
             neighborhood_name = neighborhood_row[3].replace('_', ' ')
             neighborhood_clean = re.sub('[^A-Za-z0-9 /]+', '', neighborhood_name)
 
-            neighborhood_group = folium.FeatureGroup(name=neighborhood_clean).add_to(interactive_map)
-
-            popup_html = get_popup_html(cnx, neighborhood)
-            popup_folium = folium.Popup(html=popup_html, min_width=300, max_width=300)
-
             avg_latitude = neighborhood_row[1]
             avg_longitude = neighborhood_row[2]
 
-            print(neighborhood, [avg_latitude, avg_longitude])
+            if str(neighborhood) in group_dict:
+                blank = group_dict[str(neighborhood)]
+            else:
+                print(neighborhood, [avg_latitude, avg_longitude])
+                mod_neighborhood = int(neighborhood) % 8
+                neighborhood_marker_js = """
+                            var marker{0} = L.marker([{1}, {2}], {{icon: icon{3}}}).addTo(map);
+                                                    """.format(neighborhood, avg_latitude, avg_longitude,
+                                                               mod_neighborhood)
+                popup_html = "\"<p>{0}</p>\"".format(neighborhood_clean)
+                popup_js = """
+                    marker{0}.bindPopup({1}).openPopup();
+                """.format(neighborhood, popup_html)
+                script_html = script_html + neighborhood_marker_js + popup_js
+                group_dict[str(neighborhood)] = ""
 
-            tooltip_color, icon_color = get_colors_from_set(folium.map.Icon.color_options)
+            latitude = neighborhood_row[4]
+            longitude = neighborhood_row[5]
+            location = neighborhood_row[6]
+            padctn_id = neighborhood_row[7]
 
-            neighborhood_point = folium.Marker(
-                location=[avg_latitude, avg_longitude],
-                tooltip=folium.map.Tooltip(text=neighborhood_clean),
-                popup=popup_folium,
-                icon=folium.Icon(color=tooltip_color
-                                 , icon_color=icon_color
-                                 , icon="glyphicon-map-marker"
-                                 ),
+            house_marker_js = """var circle{0} = L.circle([{1}, {2}], {{
+                color: 'blue',
+                fillOpacity: 0.3,
+                radius: 30
+            }}).addTo(map);""".format(padctn_id, latitude, longitude)
+            script_html = script_html + house_marker_js
 
-            )
-            neighborhood_group.add_child(neighborhood_point)
-
-            lat_long_sql = queries.get_lat_long.format(neighborhood)
-            house_list = get_result_set(cnx, lat_long_sql)
-
-            for house_row in house_list:
-                latitude = house_row[0]
-                longitude = house_row[1]
-                location = house_row[2]
-                circle = folium.CircleMarker(
-                    [latitude, longitude],
-                    radius=4,
-                    fill=True,
-                    popup=location,
-                    color=tooltip_color,
-
-                )
-                neighborhood_group.add_child(circle)
-
-        folium.LayerControl().add_to(interactive_map)
+        script_html = script_html + """</script>"""
+        html = html + script_html
+        html = html + """</html>"""
 
         # interactive_map.save(TEMPLATE_DIRECTORY + "base-map.html")
         # interactive_map.save(STATIC_DIRECTORY + "base-map.html")

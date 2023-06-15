@@ -9,7 +9,7 @@ from sys import platform
 # not really platform specific, but i have a local version on mac and prod in linux so this is an easy way to
 # change credentials for a local dev environment
 if platform == "linux" or platform == "linux2":
-    import creds.py
+    import creds
     LIMIT = sys.maxsize
 elif platform == "darwin":
     import local_creds as creds

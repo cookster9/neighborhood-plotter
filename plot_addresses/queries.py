@@ -36,28 +36,20 @@ get_sales_rows = """select STR_TO_DATE(CONCAT(yearweek(now()),' Sunday'), '%X%V 
     and year_week = (yearweek(now()))-4) sale_count """
 
 get_coord_set = """
-select reis.neighborhood, avg(tda.latitude), avg(tda.longitude), reis.description
-          from tn_davidson_addresses tda  
-          join (  
-          select padctn_id, neighborhood, n.description,
-          ROW_NUMBER() OVER (partition by padctn_id order by sale_date desc)  
-          rn from real_estate_info_scrape reis_in
-          join neighborhoods n on reis_in.neighborhood = n.id
-          where
-          coalesce(trim(neighborhood),'') <> ''  
-          and property_use in ('Single Family')
-          and year_week > (yearweek(now()))-5
-          ) reis on tda.padctn_id = reis.padctn_id 
-          where reis.rn = 1
-group by reis.neighborhood, reis.description
-order by reis.description asc
-limit {0};
+select reis.neighborhood, n.latitude, n.longitude, n.description, tda.latitude, tda.longitude, reis.location, reis.padctn_id
+from real_estate_info_scrape reis
+inner join neighborhoods n on reis.neighborhood = n.id
+inner join tn_davidson_addresses tda on reis.padctn_id = tda.padctn_id
+where sale_date > DATE_ADD(now(), INTERVAL -6 WEEK)
+;
           """
 
-get_lat_long = """select latitude, longitude, location
+get_lat_long = """select latitude, longitude, location, reis.padctn_id
 from real_estate_info_scrape reis
 inner join tn_davidson_addresses tda on reis.padctn_id = tda.padctn_id
-where reis.neighborhood = {0} and year_week > (yearweek(now()))-5;
+where reis.neighborhood = {0}
+order by sale_date desc
+limit 5;
 """
 
 get_neighborhoods = """select distinct n.id, n.description
