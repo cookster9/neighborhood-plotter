@@ -110,16 +110,17 @@ def main():
 
 
         print("got connection")
-        total_rows = get_result_set(cnx, queries.get_total_sales)
-        context = {}
-        for row in total_rows:
-            context[str(row[0])] = row[1]
-
-        f = open(JSON_DIRECTORY + "total_sales.json", "w")
-        f.write(json.dumps(context))
-        f.close()
+        # total_rows = get_result_set(cnx, queries.get_total_sales)
+        # context = {}
+        # for row in total_rows:
+        #     context[str(row[0])] = row[1]
+        #
+        # f = open(JSON_DIRECTORY + "total_sales.json", "w")
+        # f.write(json.dumps(context))
+        # f.close()
 
         neighborhood_list = get_result_set(cnx, queries.get_coord_set)
+        print("got neighborhood list")
 
         group_dict = {}
         for neighborhood_row in neighborhood_list:
