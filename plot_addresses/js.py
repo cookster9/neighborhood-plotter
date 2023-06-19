@@ -14,7 +14,7 @@ all_icons = """var icon0 = new L.Icon({
   shadowSize: [41, 41]
 });
 var icon2 = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-gold.png',
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-yellow.png',
   shadowUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-shadow.png',
   iconSize: [25, 41],
   iconAnchor: [12, 41],
@@ -61,12 +61,12 @@ var icon7 = new L.Icon({
   popupAnchor: [1, -34],
   shadowSize: [41, 41]
 });
-var icon8 = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-yellow.png',
+var iconHover = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-gold.png',
   shadowUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-shadow.png',
-  iconSize: [25, 41],
+  iconSize: [30, 46],
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
-  shadowSize: [41, 41]
+  shadowSize: [46, 46]
 });
 """

@@ -36,13 +36,15 @@ get_sales_rows = """select STR_TO_DATE(CONCAT(yearweek(now()),' Sunday'), '%X%V 
     and year_week = (yearweek(now()))-4) sale_count """
 
 get_coord_set = """
-select reis.neighborhood, n.latitude, n.longitude, n.description, tda.latitude, tda.longitude, reis.location, reis.padctn_id
+select reis.neighborhood, n.latitude, n.longitude, n.description
+, tda.latitude, tda.longitude, reis.location, reis.padctn_id
+, reis.sale_date, reis.sale_price, reis.id
 from real_estate_info_scrape reis
 inner join neighborhoods n on reis.neighborhood = n.id
 inner join tn_davidson_addresses tda on reis.padctn_id = tda.padctn_id
 where sale_date > DATE_ADD(now(), INTERVAL -6 WEEK)
 ;
-          """
+"""
 
 get_lat_long = """select latitude, longitude, location, reis.padctn_id
 from real_estate_info_scrape reis
