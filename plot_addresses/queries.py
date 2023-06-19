@@ -43,7 +43,7 @@ from real_estate_info_scrape reis
 inner join neighborhoods n on reis.neighborhood = n.id
 inner join tn_davidson_addresses tda on reis.padctn_id = tda.padctn_id
 where sale_date > DATE_ADD(now(), INTERVAL -6 WEEK)
-;
+and property_use = 'SINGLE FAMILY';
 """
 
 get_lat_long = """select latitude, longitude, location, reis.padctn_id
